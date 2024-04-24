@@ -9,9 +9,15 @@ Client/Server application to load big (>100mb) files with data protection.
 - The rest of the file has to be transferred via a new port..... till 100%
 
   usage:
+
   ```git - clone https://github.com/webmessia-h/tcpClientServer.git```
+
   ```make client server```
+
   ```cd bin```
+
   ```./server ip port```
+
   ```./client ip port```
+
  # for listing and transferring specify full file path
