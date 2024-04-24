@@ -26,9 +26,6 @@ server: $(SERVER_TARGET)
 # Client target
 client: $(CLIENT_TARGET)
 
-# All target 
-all: server client
-
 # Build rules
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(@D)
