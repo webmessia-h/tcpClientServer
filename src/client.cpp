@@ -1,7 +1,6 @@
 #include "../include/client.hpp"
 #include "../include/network.hpp"
 #include "../include/platform.hpp"
-#include <iostream>
 #include <netinet/in.h>
 
 int client_sockfd;
@@ -83,13 +82,10 @@ void send_file(int socket_fd, const file_info &FILE) {
 
   // send file in 50MB chunks
   size_t total_bytes_sent = 0;
-  const size_t CHUNK_SIZE = 1024 * 1024 * 50; // 50MB chunk size
   while (total_bytes_sent < FILE.file_size) {
     size_t remaining_bytes = FILE.file_size - total_bytes_sent;
-    size_t chunk_size =
-        (remaining_bytes > CHUNK_SIZE) ? CHUNK_SIZE : remaining_bytes;
     size_t bytes_sent =
-        send_data(socket_fd, FILE.buffer + total_bytes_sent, chunk_size);
+        send_data(socket_fd, FILE.buffer + total_bytes_sent, remaining_bytes);
     total_bytes_sent += bytes_sent;
     // Check for port change
     if (!get_new_port(socket_fd))
@@ -122,10 +118,10 @@ int main(int argc, char *argv[]) {
 
   const char *host = argv[1];
   int port = std::stoi(argv[2]);
-  
+
   if (!connect_to_server(host, port))
     return -1;
-  
+
   char folder[512] = {0};
   std::cout << "Specify folder to list: ";
   std::cin >> folder;

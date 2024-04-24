@@ -2,6 +2,7 @@
 #define PLATFORM_H
 
 #include <fstream>
+#include <iostream>
 #include <string.h>
 #include <vector>
 struct file_info {

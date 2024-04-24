@@ -1,7 +1,6 @@
 #include "../include/server.hpp"
 #include "../include/network.hpp"
 #include "../include/platform.hpp"
-#include <iostream>
 #include <netinet/in.h>
 
 int server_sockfd;        // server's socket
@@ -49,7 +48,7 @@ bool listen_on_new_port(sockaddr_in *p_serv_addr) {
   }
   close_socket(server_sockfd);
   // Bind server socket to new port
-  server_sockfd = create_socket(AF_INET, SOCK_STREAM, 0);
+  int new_server_sockfd = create_socket(AF_INET, SOCK_STREAM, 0);
   if (bind(server_sockfd, (struct sockaddr *)p_serv_addr,
            sizeof(*p_serv_addr)) < 0) {
     std::cerr << "Error: Failed to bind " << strerror(errno) << std::endl;
@@ -61,7 +60,9 @@ bool listen_on_new_port(sockaddr_in *p_serv_addr) {
     std::cerr << "Error: Failed to listen " << strerror(errno) << std::endl;
     close_socket(server_sockfd);
     return false;
-  }
+  } // Update server socket file descriptor
+  server_sockfd = new_server_sockfd;
+
   return true;
 }
 
@@ -138,6 +139,7 @@ bool receive_file(int communication_sockfd) {
   }
   // Write file from buffer
   write_file(filename, buffer, file_size);
+  delete[] buffer;
   return true;
 };
 
