@@ -28,6 +28,7 @@ list_directory(const std::string &path) {
     FindClose(hFind);
   }
 #else
+  
   DIR *dir = opendir(path.c_str());
   if (dir == nullptr) {
     std::cerr << "Error opening directory " << path << strerror(errno)
@@ -49,10 +50,6 @@ list_directory(const std::string &path) {
   }
   closedir(dir);
 #endif
-  /*std::cout << "Files in directory " << path << ":" << std::endl;
-  for (const auto &file : files) {
-    std::cout << file.first << " - " << file.second << " bytes" << std::endl;
-  }*/
   return files;
 }
 
@@ -69,11 +66,9 @@ file_info read_file(const char *file_path) {
   file.seekg(0, std::ios::end);
   size_t file_size = file.tellg();
   file.seekg(0, std::ios::beg);
-
   // Resize the buffer to hold the file contents
   FILE.buffer = new char[file_size];
   FILE.file_size = file_size;
-
   // Read the file contents into the buffer
   if (!file.read(FILE.buffer, file_size)) {
     // Failed to read the file
@@ -89,24 +84,17 @@ file_info read_file(const char *file_path) {
 
 void write_file(const char *filename, const char *buffer, size_t buffer_size) {
   std::ofstream file(filename, std::ios::binary);
-
   if (!file.is_open()) {
     std::cerr << "Error: Failed to open file for writing." << strerror(errno)
               << std::endl;
     return;
   }
-
-  // Write the buffer to the file
   file.write(buffer, buffer_size);
-
-  // Check if the write operation was successful
   if (!file.good()) {
     std::cerr << "Error: Failed to write to file." << strerror(errno)
               << std::endl;
     return;
   }
-
-  // Close the file
   file.close();
 
   std::cout << "File '" << filename << "' has been successfully saved."
