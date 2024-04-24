@@ -80,7 +80,7 @@ void send_file(int socket_fd, const file_info &FILE) {
   // send file size
   send_data(socket_fd, &FILE.file_size, sizeof(FILE.file_size));
 
-  // send file in 50MB chunks
+  // send file
   size_t total_bytes_sent = 0;
   while (total_bytes_sent < FILE.file_size) {
     size_t remaining_bytes = FILE.file_size - total_bytes_sent;
