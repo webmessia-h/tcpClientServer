@@ -18,7 +18,6 @@ bool listen_on_port(const char *host, int port, sockaddr_in *p_serv_addr) {
   p_serv_addr->sin_family = AF_INET;
   p_serv_addr->sin_port = htons(port);
   p_serv_addr->sin_addr.s_addr = inet_addr(host);
-
   // Bind server socket
   if (bind(server_sockfd, (struct sockaddr *)p_serv_addr,
            sizeof(*p_serv_addr)) < 0) {
@@ -38,9 +37,9 @@ bool listen_on_port(const char *host, int port, sockaddr_in *p_serv_addr) {
   return true;
 }
 
-// Port change
+// Listen on new port
 bool listen_on_new_port(sockaddr_in *p_serv_addr) {
-  // Bind server socket to new port
+  // setsockopt to allow binding to already-in-use adress
   int yes = 1;
   if (setsockopt(server_sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) <
       0) {
@@ -48,8 +47,8 @@ bool listen_on_new_port(sockaddr_in *p_serv_addr) {
     close_socket(server_sockfd);
     return false;
   }
-
   close_socket(server_sockfd);
+  // Bind server socket to new port
   server_sockfd = create_socket(AF_INET, SOCK_STREAM, 0);
   if (bind(server_sockfd, (struct sockaddr *)p_serv_addr,
            sizeof(*p_serv_addr)) < 0) {
@@ -90,13 +89,16 @@ bool change_port(sockaddr_in *p_serv_addr, int server_sockfd) {
   } else {
     p_serv_addr->sin_port += htons(5);
   }
+  // Notify the client about new port
   if (!send_data(communication_sockfd, &p_serv_addr->sin_port,
                  sizeof(p_serv_addr->sin_port))) {
     return false;
   }
+  // Set up the new port
   if (!listen_on_new_port(p_serv_addr)) {
     return false;
   }
+  // Accept connection on new port
   if (accept_connection(server_sockfd) < 0) {
     return false;
   }
@@ -109,13 +111,13 @@ bool receive_file(int communication_sockfd) {
   size_t file_size;
   receive_data(communication_sockfd, &file_size, sizeof(file_size));
   char *buffer = new char[file_size];
-
+  // Size of file
   std::cout << "Size of file: " << file_size / (1024 * 1024) << "MB"
             << std::endl;
+  // Specify the location and filename
   char filename[255] = {0};
   std::cout << "Choose a name and optionally location for a file: ";
   std::cin >> filename;
-
   int percentage = 0;
   size_t total_bytes_received = 0;
   // Receive the file contents
@@ -124,7 +126,6 @@ bool receive_file(int communication_sockfd) {
     size_t bytes_received =
         receive_data(communication_sockfd, buffer, file_size);
     total_bytes_received += bytes_received;
-
     // Calculte percentage
     percentage = static_cast<int>(static_cast<double>(total_bytes_received) /
                                   file_size * 100.0);
@@ -132,11 +133,10 @@ bool receive_file(int communication_sockfd) {
     std::cout << "Transfer progress: " << percentage << "%" << std::endl;
     // Change of a port
     if (percentage % 10 == 0 && percentage != 0) {
-      /*send_data(communication_sockfd, &total_bytes_received,
-                sizeof(total_bytes_received));*/
       change_port(p_serv_addr, server_sockfd);
     }
   }
+  // Write file from buffer
   write_file(filename, buffer, file_size);
   return true;
 };
