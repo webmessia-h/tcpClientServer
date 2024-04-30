@@ -1,4 +1,4 @@
-#include "../include/platform.hpp"
+#include "../../include/platform.hpp"
 #include <iostream>
 
 #ifdef _WIN32
@@ -28,7 +28,7 @@ list_directory(const std::string &path) {
     FindClose(hFind);
   }
 #else
-  
+
   DIR *dir = opendir(path.c_str());
   if (dir == nullptr) {
     std::cerr << "Error opening directory " << path << strerror(errno)
