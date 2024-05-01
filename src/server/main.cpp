@@ -13,17 +13,18 @@ int main(int argc, char *argv[]) {
 
   Server *srv = new Server(ip, port);
 
-  while (true) {
-    srv->start_server();
-    srv->bind_to_port();
-    srv->listen_client();
-    srv->accept_connection();
-    srv->receive_file_list();
+  Network::create_server(srv->server_sockfd, srv->server_addr, srv->ip,
+                         srv->port);
+  Network::bind_to_port(srv->port, srv->server_sockfd, srv->server_addr);
+  Network::listen_client(srv->server_sockfd);
+  Network::accept_connection(srv->server_sockfd, srv->communication_sockfd);
+  if (srv->receive_file_list() != 0) {
     std::cout << "Choose file to upload: ";
     std::cin >> filename;
     srv->request_upload(filename);
-    srv->receive_file();
+    srv->receive_file(srv->communication_sockfd);
   }
+  // srv->receive_file();
   delete srv;
   return 0;
 }
