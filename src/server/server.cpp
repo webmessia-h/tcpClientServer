@@ -2,7 +2,9 @@
 #include "../../include/network.hpp"
 #include "../../include/platform.hpp"
 #include <cerrno>
+#include <cmath>
 #include <cstring>
+#include <iomanip>
 #include <string>
 #include <sys/socket.h>
 
@@ -41,7 +43,7 @@ bool Server::request_upload(const char *filename) {
 };
 
 // Change port
-bool Server::change_port() {
+int Server::change_port() {
 
   if (transfer_sockfd > 0) {
     Network::close_socket(transfer_sockfd);
@@ -74,9 +76,10 @@ bool Server::change_port() {
     std::cerr << "Error: Failed to notify client about new port"
               << strerror(errno) << std::endl;
   }
-  Network::accept_connection(transfer_sockfd, transfer_sockfd);
+  transfer_sockfd =
+      Network::accept_connection(transfer_sockfd, transfer_sockfd);
   std::cout << "Port changed to: " << ntohs(server_addr.sin_port) << std::endl;
-  return true;
+  return transfer_sockfd;
 }
 
 // Receive the file
@@ -121,9 +124,9 @@ bool Server::receive_file(int transfer_sockfd) {
         static_cast<double>(total_bytes_received) / file_size * 100.0);
     if (new_percentage != percentage) {
       percentage = new_percentage;
-      if (percentage % 10 == 0 && percentage != 0) {
+      if ((percentage - 1) % 10 == 0) {
         Network::send_data(communication_sockfd, CHPORT, sizeof(CHPORT));
-        change_port();
+        transfer_sockfd = change_port();
       }
       // Print the progress bar
       int num_steps = 25;
@@ -131,11 +134,9 @@ bool Server::receive_file(int transfer_sockfd) {
           static_cast<int>(static_cast<double>(percentage) / 100.0 * num_steps);
       std::cout << "\rTransfer progress: [" << std::string(completed_steps, '=')
                 << std::string(num_steps - completed_steps, ' ') << "] "
-                << percentage << "%" << std::flush;
+                << percentage << "%" << "\t" << std::flush;
     }
-  }
-
-  // Write file from buffer
+  } // Write file from buffer
   std::cout << std::endl;
   write_file(filename, buffer, file_size);
   ::cleanup_handler(buffer);

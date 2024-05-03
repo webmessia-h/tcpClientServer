@@ -11,7 +11,7 @@ public:
   // Request desired file from the client
   bool request_upload(const char *filename);
   // Handle port change
-  bool change_port();
+  int change_port();
   //  Receive file
   bool receive_file(int communication_sockfd);
 

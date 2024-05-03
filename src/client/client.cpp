@@ -1,7 +1,6 @@
 #include "../../include/client.hpp"
 #include "../../include/network.hpp"
 #include "../../include/platform.hpp"
-#include <iomanip>
 #include <linux/close_range.h>
 #include <sys/socket.h>
 Client::Client(const char *ip, int port)
@@ -34,7 +33,7 @@ int Client::get_new_port() {
   transfer_sockfd = Network::create_socket(PF_INET, SOCK_STREAM, 0);
   int port = 0;
   Network::receive_data(client_sockfd, &port, sizeof(port));
-  std::cout << "new port: " << (port) << std::endl;
+  // std::cout << "new port: " << (port) << std::endl;
   if (!Network::connect_to_server(transfer_sockfd, server_addr, ip, port)) {
     return false;
   }
@@ -50,7 +49,7 @@ void Client::send_file(const file_info &FILE) {
   while (total_bytes_sent < FILE.file_size) {
     char msg[4] = {0};
     Network::receive_data(client_sockfd, msg, sizeof(msg));
-    std::cout << "\r" << msg << "\t" << std::flush;
+    // std::cout << "\r" << msg << "\t" << std::flush;
     if (msg[0] == 'C') {
       transfer_sockfd = get_new_port();
       continue;
