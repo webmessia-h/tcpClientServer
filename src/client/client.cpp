@@ -3,29 +3,9 @@
 #include "../../include/platform.hpp"
 #include <iomanip>
 #include <linux/close_range.h>
+#include <sys/socket.h>
 Client::Client(const char *ip, int port)
     : ip(std::move(ip)), port(std::move(port)) {}
-
-/*
-// Connect to new port
-bool connect_to_new_port(sockaddr_in *p_serv_addr) {
-  // reinitialize socket
-  close_socket(client_sockfd);
-  client_sockfd = create_socket(AF_INET, SOCK_STREAM, 0);
-  if (connect(client_sockfd, (struct sockaddr *)p_serv_addr,
-              sizeof(*p_serv_addr)) < 0) {
-    // Failed to connect
-    std::cerr << "Error: Client failed to connect to: "
-              << inet_ntoa(p_serv_addr->sin_addr)
-              << " on port: " << ntohs(p_serv_addr->sin_port) << strerror(errno)
-              << std::endl;
-    close_socket(client_sockfd);
-    return false;
-  }
-  std::cout << "Client connected to: " << inet_ntoa(p_serv_addr->sin_addr)
-            << " on port: " << ntohs(p_serv_addr->sin_port) << std::endl;
-  return true;
-}*/
 
 // Send listed directory
 void Client::send_file_list(const char *folder_path) {
@@ -47,15 +27,18 @@ void Client::send_file_list(const char *folder_path) {
 }
 
 // get and set new port
-bool Client::get_new_port() {
-  Network::create_client(transfer_sockfd);
+int Client::get_new_port() {
+  if (transfer_sockfd > 0) {
+    Network::close_socket(transfer_sockfd);
+  }
+  transfer_sockfd = Network::create_socket(PF_INET, SOCK_STREAM, 0);
   int port = 0;
   Network::receive_data(client_sockfd, &port, sizeof(port));
   std::cout << "new port: " << (port) << std::endl;
   if (!Network::connect_to_server(transfer_sockfd, server_addr, ip, port)) {
     return false;
   }
-  return true;
+  return transfer_sockfd;
 }
 
 // send file with dynamic port change
@@ -66,10 +49,10 @@ void Client::send_file(const file_info &FILE) {
   size_t total_bytes_sent = 0;
   while (total_bytes_sent < FILE.file_size) {
     char msg[4] = {0};
-    Network::receive_data(client_sockfd, &msg, sizeof(msg));
-    std::cout << "\r" << msg << std::flush;
+    Network::receive_data(client_sockfd, msg, sizeof(msg));
+    std::cout << "\r" << msg << "\t" << std::flush;
     if (msg[0] == 'C') {
-      get_new_port();
+      transfer_sockfd = get_new_port();
       continue;
     } else if (msg[0] == 'A') {
       size_t remaining_bytes = FILE.file_size - total_bytes_sent;

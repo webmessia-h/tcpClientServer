@@ -25,7 +25,7 @@ public:
   // Accept pending connection request
   static int accept_connection(int &server_sockfd, int &communication_sockfd);
   // Initialize client's socket
-  static void create_client(int &client_sockfd);
+  static int create_client(int &client_sockfd);
   // Make connection request
   static bool connect_to_server(int &client_sockfd,
                                 struct sockaddr_in &server_addr, const char *ip,
