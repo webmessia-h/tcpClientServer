@@ -7,9 +7,8 @@ public:
   Client(const char *ip, int port);
   ~Client();
   friend class Network;
-  bool get_new_port();
+  int get_new_port();
   void send_file_list(const char *folder_path);
-  bool parse_message(const char *msg, int &newPort);
   bool handle_request();
   void send_file(const file_info &FILE);
 

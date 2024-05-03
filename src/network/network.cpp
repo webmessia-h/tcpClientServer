@@ -50,6 +50,19 @@ bool Network::create_server(int &server_sockfd, struct sockaddr_in &server_addr,
   return true;
 }
 
+// Create client
+int Network::create_client(int &client_sockfd) {
+  if (client_sockfd != 0) {
+    close_socket(client_sockfd);
+  }
+  client_sockfd = create_socket(PF_INET, SOCK_STREAM, 0);
+  if (client_sockfd < 0) {
+    std::cerr << "Error: Failed to create client socket " << strerror(errno)
+              << std::endl;
+  }
+  return client_sockfd;
+}
+
 bool Network::bind_to_port(int port, int &server_sockfd,
                            struct sockaddr_in &server_addr) {
   server_addr.sin_port = htons(port);
@@ -89,9 +102,6 @@ bool Network::listen_client(int &server_sockfd) {
 // Accept incoming connections
 int Network::accept_connection(int &server_sockfd, int &communication_sockfd) {
   // Create communication socket
-  /*if (communication_sockfd > 0) {
-    Network::close_socket(communication_sockfd);
-  }*/
   struct sockaddr_in client_addr;
   socklen_t client_addr_len = sizeof(client_addr);
   communication_sockfd =
@@ -107,18 +117,6 @@ int Network::accept_connection(int &server_sockfd, int &communication_sockfd) {
   std::cout.write(msg, strlen(msg));
   std::cout << "\n";
   return communication_sockfd;
-}
-
-// Create client
-void Network::create_client(int &client_sockfd) {
-  if (client_sockfd != 0) {
-    close_socket(client_sockfd);
-  }
-  client_sockfd = create_socket(PF_INET, SOCK_STREAM, 0);
-  if (client_sockfd < 0) {
-    std::cerr << "Error: Failed to create client socket " << strerror(errno)
-              << std::endl;
-  }
 }
 
 bool Network::connect_to_server(int &client_sockfd,

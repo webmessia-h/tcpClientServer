@@ -58,7 +58,7 @@ bool Server::change_port() {
     return false;
   }
 
-  if (server_addr.sin_port < 8400) {
+  if (port < 8400) {
     port = 8400;
   } else {
     port += 5;
@@ -84,36 +84,29 @@ bool Server::receive_file(int transfer_sockfd) {
   // Messages for client
   const char ACK[4] = "ACK";    // continue transfer
   const char CHPORT[4] = "CHP"; // change port
-
   // Get size of file
   size_t file_size;
   Network::receive_data(transfer_sockfd, &file_size, sizeof(file_size));
   char *buffer = new char[file_size];
   std::cout << "Size of file: " << file_size / (1024 * 1024) << "MB"
             << std::endl;
-
   // Specify the location and filename
   char filename[255] = {0};
   std::cout << "Choose a name and optionally location for a file: ";
   std::cin >> filename;
-
   // For dynamic port change and progress bar
   int percentage = 0;
   size_t total_bytes_received = 0;
-
   // Receive the file contents
   while (total_bytes_received < file_size) {
-
     // Calculate percentage
     percentage = static_cast<int>(static_cast<double>(total_bytes_received) *
                                   100.0 / file_size);
     // Send ACK for start of the upload
-    Network::send_data(communication_sockfd, &ACK, sizeof(ACK));
-
+    Network::send_data(communication_sockfd, ACK, sizeof(ACK));
     // To determine loop conditions and size of received package (1KB)
     size_t remaining_bytes = file_size - total_bytes_received;
     size_t chunk_size = remaining_bytes > 1024 ? 1024 : remaining_bytes;
-
     // Actually receive chunk of file
     size_t bytes_received = Network::receive_data(
         transfer_sockfd, buffer + total_bytes_received, chunk_size);
@@ -123,14 +116,13 @@ bool Server::receive_file(int transfer_sockfd) {
       break;
       return false;
     }
-
     // Check if it's time to change port
     int new_percentage = static_cast<int>(
         static_cast<double>(total_bytes_received) / file_size * 100.0);
     if (new_percentage != percentage) {
       percentage = new_percentage;
-      if (new_percentage % 10 == 0 && new_percentage != 0) {
-        Network::send_data(communication_sockfd, &CHPORT, sizeof(CHPORT));
+      if (percentage % 10 == 0 && percentage != 0) {
+        Network::send_data(communication_sockfd, CHPORT, sizeof(CHPORT));
         change_port();
       }
       // Print the progress bar
