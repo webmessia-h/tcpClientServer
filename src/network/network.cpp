@@ -36,13 +36,6 @@ bool Network::create_server(int &server_sockfd, struct sockaddr_in &server_addr,
   if (server_sockfd > 0) {
     Network::close_socket(server_sockfd);
   }
-  /*int yes = 1;
-  if (setsockopt(server_sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) <
-      0) {
-    std::cerr << "Error setting SO_REUSEADDR" << std::endl;
-    Network::close_socket(server_sockfd);
-    return false;
-  }*/
 
   server_sockfd = Network::create_socket(PF_INET, SOCK_STREAM, 0);
   if (server_sockfd < 0) {
@@ -56,18 +49,30 @@ bool Network::create_server(int &server_sockfd, struct sockaddr_in &server_addr,
   server_addr.sin_port = htons(port);
   return true;
 }
+
 bool Network::bind_to_port(int port, int &server_sockfd,
                            struct sockaddr_in &server_addr) {
-  // close and reopen socket
   server_addr.sin_port = htons(port);
-  std::cout << "Server started on port: " << port << std::endl;
-  if (bind(server_sockfd, reinterpret_cast<struct sockaddr *>(&server_addr),
-           sizeof(server_addr)) < 0) {
-    std::cerr << "Error: Failed to bind " << strerror(errno) << std::endl;
+  try {
+    if (bind(server_sockfd, reinterpret_cast<struct sockaddr *>(&server_addr),
+             sizeof(server_addr)) < 0) {
+      // Check if the error is "Address already in use"
+      if (errno == EADDRINUSE) {
+        std::cerr << "Error: Address already in use" << std::endl;
+        Network::close_socket(server_sockfd);
+        return false;
+      }
+      // For other errors, throw an exception
+      throw std::runtime_error(std::string("Error: Failed to bind: ") +
+                               strerror(errno));
+    }
+    std::cout << "Server started on port: " << port << std::endl;
+    return true;
+  } catch (const std::exception &ex) {
+    std::cerr << ex.what() << std::endl;
     Network::close_socket(server_sockfd);
     return false;
   }
-  return true;
 }
 
 // Listen for incoming connections
@@ -77,15 +82,16 @@ bool Network::listen_client(int &server_sockfd) {
     Network::close_socket(server_sockfd);
     return false;
   }
+  std::cout << "Listening for incoming connection" << std::endl;
   return true;
 }
 
 // Accept incoming connections
 int Network::accept_connection(int &server_sockfd, int &communication_sockfd) {
   // Create communication socket
-  if (communication_sockfd > 0) {
+  /*if (communication_sockfd > 0) {
     Network::close_socket(communication_sockfd);
-  }
+  }*/
   struct sockaddr_in client_addr;
   socklen_t client_addr_len = sizeof(client_addr);
   communication_sockfd =
@@ -97,8 +103,9 @@ int Network::accept_connection(int &server_sockfd, int &communication_sockfd) {
     return -1;
   }
   const char *msg = "Connection was established";
-  std::cout << "Connection was established" << std::endl;
   send_data(communication_sockfd, msg, strlen(msg));
+  std::cout.write(msg, strlen(msg));
+  std::cout << "\n";
   return communication_sockfd;
 }
 
@@ -107,7 +114,7 @@ void Network::create_client(int &client_sockfd) {
   if (client_sockfd != 0) {
     close_socket(client_sockfd);
   }
-  client_sockfd = socket(PF_INET, SOCK_STREAM, 0);
+  client_sockfd = create_socket(PF_INET, SOCK_STREAM, 0);
   if (client_sockfd < 0) {
     std::cerr << "Error: Failed to create client socket " << strerror(errno)
               << std::endl;
@@ -117,12 +124,7 @@ void Network::create_client(int &client_sockfd) {
 bool Network::connect_to_server(int &client_sockfd,
                                 struct sockaddr_in &server_addr, const char *ip,
                                 int port) {
-  // Create socket
-  if (client_sockfd > 0) {
-    Network::close_socket(client_sockfd);
-  }
-  client_sockfd = Network::create_socket(AF_INET, SOCK_STREAM, 0);
-  // Get server's ip and port number
+  //  Get server's ip and port number
   server_addr.sin_family = AF_INET;
   server_addr.sin_port = htons(port);
   server_addr.sin_addr.s_addr = inet_addr(ip);
@@ -131,7 +133,7 @@ bool Network::connect_to_server(int &client_sockfd,
               sizeof(server_addr)) < 0) {
     // Failed to connect
     std::cerr << "Error: Client failed to connect to:"
-              << inet_ntoa(server_addr.sin_addr) << " on port: " << port
+              << inet_ntoa(server_addr.sin_addr) << " on port: " << port << "\t"
               << strerror(errno) << std::endl;
     close_socket(client_sockfd);
     return false;
@@ -145,20 +147,6 @@ bool Network::connect_to_server(int &client_sockfd,
   std::cout << "\n";
   return true;
 }
-
-/*bool Network::create_connection(const char *ip, int port, class Server
-&server, class Client &client) { server.start_server(); server.bind_to_port();
-  server.listen_client();
-  client.connect_to_server();
-  if (server.accept_connection() > 0) {
-    std::cout << "Connection established" << std::endl;
-    return true;
-  } else {
-    return false;
-    std::cerr << "Error: Failed to establish connection" << strerror(errno)
-              << std::endl;
-  }
-}*/
 
 size_t Network::send_data(int socket_fd, const void *data, size_t size) {
   ssize_t bytes_sent = send(socket_fd, data, size, 0);
@@ -175,7 +163,7 @@ size_t Network::receive_data(int socket_fd, void *buffer, size_t size) {
   ssize_t bytes_received = recv(socket_fd, buffer, size, 0);
   if (bytes_received < 0) {
     // Error sending data
-    std::cerr << "Error: No bytes received." << std::endl;
+    // std::cerr << "Error: No bytes received." << std::endl;
     return -1;
   }
   // std::cout << "Bytes received: " << bytes_received << std::endl;

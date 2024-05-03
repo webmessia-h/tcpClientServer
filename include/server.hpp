@@ -15,7 +15,7 @@ public:
   //  Receive file
   bool receive_file(int communication_sockfd);
 
-  int server_sockfd, port, communication_sockfd;
+  int server_sockfd, port, communication_sockfd, transfer_sockfd;
   struct sockaddr_in server_addr;
   const char *ip;
 };

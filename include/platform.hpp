@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <pwd.h>
+#include <stdexcept>
 #include <string.h>
 #include <unistd.h>
 #include <vector>

@@ -14,6 +14,6 @@ public:
   void send_file(const file_info &FILE);
 
   const char *ip;
-  int port, client_sockfd = 0;
+  int port, client_sockfd, transfer_sockfd;
   struct sockaddr_in server_addr;
 };

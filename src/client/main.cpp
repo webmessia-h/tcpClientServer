@@ -21,6 +21,7 @@ int main(int argc, char *argv[]) {
   cl->send_file_list(folder_path);
   cl->handle_request();
 
+  cl->~Client();
   delete cl;
   return 0;
 }
