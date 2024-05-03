@@ -2,7 +2,7 @@
 CC := g++
 
 # Compiler flags
-CFLAGS := -Wall -Wextra -std=c++11
+CFLAGS := -g -Wall -Wextra -std=c++11
 
 # Directories
 SRC_DIR := src

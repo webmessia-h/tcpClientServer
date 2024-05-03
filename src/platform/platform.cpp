@@ -1,4 +1,4 @@
-#include "../include/platform.hpp"
+#include "../../include/platform.hpp"
 #include <iostream>
 
 #ifdef _WIN32
@@ -8,8 +8,36 @@
 #include <dirent.h>
 #endif
 
+std::string resolve_relative_path(const std::string &relative_path) {
+  if (relative_path.empty()) {
+    throw std::invalid_argument("Empty path provided");
+  }
+
+  // Check if the path starts with a tilde (~)
+  if (relative_path[0] == '~') {
+    // Get the home directory of the current user
+    const char *home_dir = getenv("HOME");
+    if (!home_dir) {
+      struct passwd *pw = getpwuid(getuid());
+      if (pw && pw->pw_dir) {
+        home_dir = pw->pw_dir;
+      } else {
+        throw std::runtime_error("Failed to determine home directory");
+      }
+    }
+    // Construct the absolute path
+    std::string absolute_path = std::string(home_dir) + relative_path.substr(1);
+    // Return the absolute path
+    return absolute_path;
+  }
+
+  // Otherwise, the path is already absolute
+  return relative_path;
+}
+
 std::vector<std::pair<std::string, long long>>
 list_directory(const std::string &path) {
+  std::string absolute_path = resolve_relative_path(path);
   std::vector<std::pair<std::string, long long>> files;
 #ifdef _WIN32
   WIN32_FIND_DATA findFileData;
@@ -28,8 +56,7 @@ list_directory(const std::string &path) {
     FindClose(hFind);
   }
 #else
-  
-  DIR *dir = opendir(path.c_str());
+  DIR *dir = opendir(absolute_path.c_str());
   if (dir == nullptr) {
     std::cerr << "Error opening directory " << path << strerror(errno)
               << std::endl;
@@ -39,7 +66,7 @@ list_directory(const std::string &path) {
   while ((entry = readdir(dir)) != nullptr) {
     std::string filename = entry->d_name;
     if (filename != "." && filename != "..") {
-      std::string fullpath = path + "/" + filename;
+      std::string fullpath = absolute_path + "/" + filename;
       struct stat st;
       if (stat(fullpath.c_str(), &st) == 0) {
         if (S_ISREG(st.st_mode)) { // Check if it's a regular file
@@ -53,8 +80,9 @@ list_directory(const std::string &path) {
   return files;
 }
 
-file_info read_file(const char *file_path) {
-  std::ifstream file(file_path, std::ios::binary);
+file_info read_file(const char *filename) {
+  std::string absolute_path = resolve_relative_path(filename);
+  std::ifstream file(absolute_path, std::ios::binary);
   file_info FILE;
   if (!file.is_open()) {
     FILE.buffer = nullptr;
@@ -83,7 +111,8 @@ file_info read_file(const char *file_path) {
 }
 
 void write_file(const char *filename, const char *buffer, size_t buffer_size) {
-  std::ofstream file(filename, std::ios::binary);
+  std::string absolute_path = resolve_relative_path(filename);
+  std::ofstream file(absolute_path, std::ios::binary);
   if (!file.is_open()) {
     std::cerr << "Error: Failed to open file for writing." << strerror(errno)
               << std::endl;
@@ -99,4 +128,11 @@ void write_file(const char *filename, const char *buffer, size_t buffer_size) {
 
   std::cout << "File '" << filename << "' has been successfully saved."
             << std::endl;
+}
+
+bool cleanup_handler(char *buffer) {
+  if (buffer != nullptr)
+    delete[] buffer;
+  return false;
+  return true;
 }
