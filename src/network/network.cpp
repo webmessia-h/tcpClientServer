@@ -79,7 +79,7 @@ bool Network::bind_to_port(int port, int &server_sockfd,
       throw std::runtime_error(std::string("Error: Failed to bind: ") +
                                strerror(errno));
     }
-    std::cout << "Server started on port: " << port << std::endl;
+    // std::cout << "Server started on port: " << port << std::endl;
     return true;
   } catch (const std::exception &ex) {
     std::cerr << ex.what() << std::endl;
@@ -95,7 +95,7 @@ bool Network::listen_client(int &server_sockfd) {
     Network::close_socket(server_sockfd);
     return false;
   }
-  std::cout << "Listening for incoming connection" << std::endl;
+  // std::cout << "Listening for incoming connection" << std::endl;
   return true;
 }
 
@@ -114,8 +114,8 @@ int Network::accept_connection(int &server_sockfd, int &communication_sockfd) {
   }
   const char *msg = "Connection was established";
   send_data(communication_sockfd, msg, strlen(msg));
-  std::cout.write(msg, strlen(msg));
-  std::cout << "\n";
+  // std::cout.write(msg, strlen(msg));
+  // std::cout << "\n";
   return communication_sockfd;
 }
 
@@ -136,9 +136,9 @@ bool Network::connect_to_server(int &client_sockfd,
     close_socket(client_sockfd);
     return false;
   }
-  std::cout << "Client attempted to connect to: "
-            << inet_ntoa(server_addr.sin_addr) << " on port: " << port
-            << std::endl;
+  // std::cout << "Client attempted to connect to: "
+  //         << inet_ntoa(server_addr.sin_addr) << " on port: " << port
+  //         << std::endl;
   char msg[27] = {0};
   int bytes_received = receive_data(client_sockfd, &msg, sizeof(msg));
   std::cout.write(msg, bytes_received);
@@ -161,7 +161,7 @@ size_t Network::receive_data(int socket_fd, void *buffer, size_t size) {
   ssize_t bytes_received = recv(socket_fd, buffer, size, 0);
   if (bytes_received < 0) {
     // Error sending data
-    // std::cerr << "Error: No bytes received." << std::endl;
+    std::cerr << "Error: No bytes received." << std::endl;
     return -1;
   }
   // std::cout << "Bytes received: " << bytes_received << std::endl;
@@ -174,6 +174,6 @@ void Network::close_socket(int socket_fd) {
   WSACleanup();
 #else
   close(socket_fd);
-  std::cout << "Socket was closed" << std::endl;
+  // std::cout << "Socket was closed" << std::endl;
 #endif
 }
