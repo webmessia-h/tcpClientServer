@@ -20,4 +20,8 @@ Client/Server application to load big (>100mb) files with data protection.
 
   ```./client ip port```
 
- # for listing and transferring specify full file path
+  client : ```~/pathToFolder```
+
+  server : ```~/pathToFolder/filename```
+
+  server : ```~/savePath/filename```
