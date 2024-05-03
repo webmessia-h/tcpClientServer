@@ -112,10 +112,11 @@ int Network::accept_connection(int &server_sockfd, int &communication_sockfd) {
               << std::endl;
     return -1;
   }
+  /*
   const char *msg = "Connection was established";
   send_data(communication_sockfd, msg, strlen(msg));
-  // std::cout.write(msg, strlen(msg));
-  // std::cout << "\n";
+   std::cout.write(msg, strlen(msg));
+   std::cout << "\n";*/
   return communication_sockfd;
 }
 
@@ -136,13 +137,13 @@ bool Network::connect_to_server(int &client_sockfd,
     close_socket(client_sockfd);
     return false;
   }
-  // std::cout << "Client attempted to connect to: "
-  //         << inet_ntoa(server_addr.sin_addr) << " on port: " << port
-  //         << std::endl;
+  /* std::cout << "Client attempted to connect to: "
+           << inet_ntoa(server_addr.sin_addr) << " on port: " << port
+           << std::endl;
   char msg[27] = {0};
   int bytes_received = receive_data(client_sockfd, &msg, sizeof(msg));
   std::cout.write(msg, bytes_received);
-  std::cout << "\n";
+  std::cout << "\n";*/
   return true;
 }
 

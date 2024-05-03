@@ -2,7 +2,9 @@
 #include "../../include/network.hpp"
 #include "../../include/platform.hpp"
 #include <cerrno>
+#include <cmath>
 #include <cstring>
+#include <iomanip>
 #include <string>
 #include <sys/socket.h>
 
@@ -122,9 +124,7 @@ bool Server::receive_file(int transfer_sockfd) {
         static_cast<double>(total_bytes_received) / file_size * 100.0);
     if (new_percentage != percentage) {
       percentage = new_percentage;
-      std::cout << "Debug: New percentage: " << percentage
-                << std::endl; // Debug statement
-      if (percentage % 10 == 0 && percentage != 0) {
+      if ((percentage - 1) % 10 == 0) {
         Network::send_data(communication_sockfd, CHPORT, sizeof(CHPORT));
         transfer_sockfd = change_port();
       }
@@ -136,9 +136,7 @@ bool Server::receive_file(int transfer_sockfd) {
                 << std::string(num_steps - completed_steps, ' ') << "] "
                 << percentage << "%" << "\t" << std::flush;
     }
-  }
-
-  // Write file from buffer
+  } // Write file from buffer
   std::cout << std::endl;
   write_file(filename, buffer, file_size);
   ::cleanup_handler(buffer);
