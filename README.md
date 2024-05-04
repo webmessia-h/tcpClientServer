@@ -10,7 +10,7 @@ Client/Server application to load big (>100mb) files with data protection.
 
   usage:
 
-  ```git - clone https://github.com/webmessia-h/tcpClientServer.git```
+  ```git -clone https://github.com/webmessia-h/tcpClientServer.git```
 
   ```make client server```
 
